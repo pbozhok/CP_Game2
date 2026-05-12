@@ -11,8 +11,18 @@ stop = False
 spiller = Entity(model='test.glb',
                  scale=(1, 1, 1),
                  position=(0, 0, 0),
-                 collider='box')
+                 collider='box',
+                 shader='basic_lighting_shader'
+                 )
 
+shield = Entity(
+    model='sphere',
+    color=color.cyan,
+    scale=2,  # Bigger than player
+    position=spiller.position,
+    alpha=0.3,  # Makes it transparent! (0=invisible, 1=solid)
+    enabled=False  # Hidden at start
+)
 
 modstander = []
 tid_modstander = 3
@@ -56,7 +66,7 @@ def opdatere_langsom_text():
         
 
 def genstart():
-    global game_over_text, speed, langsom_tid, modstander, spiller, score, tid_modstander, score_text, genstart_knap
+    global game_over_text, speed, langsom_tid, modstander, spiller, score, tid_modstander, score_text, genstart_knap, shield
     for modstand in modstander:
         destroy(modstand)
     modstander = []
@@ -67,6 +77,7 @@ def genstart():
     speed = 0
     langsom_tid = 0
     game_over_text.enabled = False
+    shield.enabled = False
     if genstart_knap != None:
         destroy(genstart_knap)
         genstart_knap = None
@@ -86,9 +97,21 @@ def spawn_modstand(farve, speed_factor, storelse):
     return ny_modstand
 
 
+def spawn_bonus(farve, storelse):
+    """Lav en bonus med forskellige egenskaber"""
+    ny_bonus = Entity(
+        model='sphere',
+        color=farve,
+        scale=(storelse, storelse, storelse),
+        position=(random.uniform(-4, 4), 0, 8),
+        collider='sphere',
+        shader='basic_lighting_shader'
+    )
+    return ny_bonus
+
 def update():
     global stop, score, score_text, modstander, tid_modstander, game_over_text, speed, tid_bonus, bonus, langsom_tid
-    global genstart_knap, score_lyd
+    global genstart_knap, score_lyd, shield
     if game_over_text.enabled:
         return
 
@@ -99,12 +122,17 @@ def update():
 
     for modstand in modstander:
         if spiller.intersects(modstand).hit:
-            game_over_text.enabled = True
-            genstart_knap = Button('Genstart spil', 
-                                   origin=(0.0, 0.5), 
-                                   scale_x = 0.2, 
-                                   scale_y=0.15)
-            genstart_knap.on_click = genstart
+            if shield.enabled:
+                shield.enabled = False
+                destroy(modstand)
+                modstander.remove(modstand)
+            else:
+                game_over_text.enabled = True
+                genstart_knap = Button('Genstart spil', 
+                                    origin=(0.0, 0.5), 
+                                    scale_x = 0.2, 
+                                    scale_y=0.15)
+                genstart_knap.on_click = genstart
 
     if tid_modstander > 10:
         # Spawn different types randomly!
@@ -116,14 +144,11 @@ def update():
         tid_modstander = 0
         speed += 0.01
 
-    if tid_bonus > 25:
-        # global tid_bonus, bonus, tid_bonus = 0, bonus = None 
-        bonus = Entity(model='sphere',
-                    color=color.green,
-                    scale=(1, 1, 1),
-                    position=(0, 0, 8),
-                    collider='sphere',
-                    shader='basic_lighting_shader')
+    if tid_bonus > 12:
+        if random.random() < 0.5:
+            bonus = spawn_bonus(farve=color.green, storelse=1)
+        else:
+            bonus = spawn_bonus(farve=color.blue, storelse=0.5)
         tid_bonus = 0
 
     langsom = 1
@@ -143,9 +168,15 @@ def update():
     if bonus != None:        
         bonus.z -= time.dt * 3
         if spiller.intersects(bonus).hit:
-            langsom_tid += 10
+            if bonus.color == color.green:
+                langsom_tid += 10
+            elif bonus.color == color.blue:
+                shield.enabled = True
             destroy(bonus)
             bonus = None
+    if shield.enabled:
+        shield.position = spiller.position
+        shield.scale = 2 + math.sin(time.time() * 5) * 0.2
 
     tid_modstander += time.dt
     tid_bonus += time.dt
