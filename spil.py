@@ -5,8 +5,8 @@ import random
 
 app = Ursina()
 
-camera.position = (0, 5 , -10)
-camera.look_at((0, 0, 0))
+camera.position = (0, 15 , -7)
+camera.look_at((0, 0, 3))
 stop = False
 spiller = Entity(model='test.glb',
                  scale=(1, 1, 1),
@@ -56,7 +56,7 @@ def opdatere_langsom_text():
         
 
 def genstart():
-    global game_over_text, speed, langsom_tid, modstander, spiller, score, tid_modstander, score_text
+    global game_over_text, speed, langsom_tid, modstander, spiller, score, tid_modstander, score_text, genstart_knap
     for modstand in modstander:
         destroy(modstand)
     modstander = []
@@ -134,5 +134,6 @@ def update():
 
     tid_modstander += time.dt
     tid_bonus += time.dt
+    opdatere_langsom_text()
 
 app.run()
