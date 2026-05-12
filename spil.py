@@ -71,6 +71,21 @@ def genstart():
         destroy(genstart_knap)
         genstart_knap = None
 
+
+def spawn_modstand(farve, speed_factor, storelse):
+    """Lav en modstander med forskellige egenskaber"""
+    ny_modstand = Entity(
+        model='sphere',
+        color=farve,
+        scale=(storelse, storelse, storelse),
+        position=(random.uniform(-4, 4), 0, 8),
+        collider='sphere',
+        shader='basic_lighting_shader'
+    )
+    ny_modstand.speed_factor = speed_factor
+    return ny_modstand
+
+
 def update():
     global stop, score, score_text, modstander, tid_modstander, game_over_text, speed, tid_bonus, bonus, langsom_tid
     global genstart_knap, score_lyd
@@ -92,12 +107,12 @@ def update():
             genstart_knap.on_click = genstart
 
     if tid_modstander > 10:
-        modstander.append(Entity(model='sphere',
-                    color=color.red,
-                    scale=(1, 1, 1),
-                    position=(0, 0, 8),
-                    collider='sphere',
-                    shader='basic_lighting_shader'))
+        # Spawn different types randomly!
+        if random.random() < 0.3:
+            ny_modstand = spawn_modstand(farve=color.orange, speed_factor=0.70, storelse=1.5)  # Slow big one
+        else:
+            ny_modstand = spawn_modstand(farve=color.red, speed_factor=1.20, storelse=1)  # Fast small one
+        modstander.append(ny_modstand)
         tid_modstander = 0
         speed += 0.01
 
@@ -117,7 +132,7 @@ def update():
         langsom_tid -= time.dt
 
     for modstand in modstander:
-        modstand.z -= (time.dt * 2 + speed) * langsom
+        modstand.z -= (time.dt * 2 + (speed * langsom * modstand.speed_factor))
         if modstand.z < -4:
             modstand.z = 8
             modstand.x = random.uniform(-4, 4)
